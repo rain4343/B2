@@ -1,0 +1,59 @@
+    // ... (لەناو UserController)
+    // دڵنیابە ئەم use statementـانە لە سەرەوە هەن:
+    // use App\Models\User;
+    // use App\Models\Department;
+    // use Illuminate\Http\Request;
+    // use Illuminate\Support\Facades\Hash;
+
+    /**
+     * پیشاندانی فۆڕمی دەستکاریکردنی فەرمانبەر
+     */
+    public function edit(User $user)
+    {
+        $departments = Department::all();
+        return view('admin.users.edit', compact('user', 'departments'));
+    }
+
+    /**
+     * نوێکردنەوەی زانیاری فەرمانبەرەکە لە داتابەیس
+     */
+    public function update(Request $request, User $user)
+    {
+        $validatedData = $request->validate([
+            'full_name' => 'required|string|max:150',
+            'username' => 'required|string|max:50|unique:users,username,' . $user->id,
+            'email' => 'required|string|email|max:100|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:8|confirmed', // nullable واتە ئارەزوومەندانەیە
+            'department_id' => 'nullable|exists:departments,id',
+        ]);
+
+        // تەنها ئەگەر وشەی نهێنی نوێ نووسرابوو، نوێی بکەرەوە
+        if (!empty($validatedData['password'])) {
+            $user->password = Hash::make($validatedData['password']);
+        }
+
+        $user->full_name = $validatedData['full_name'];
+        $user->username = $validatedData['username'];
+        $user->email = $validatedData['email'];
+        $user->department_id = $validatedData['department_id'];
+        $user->save();
+
+        return redirect()->route('admin.users.index')
+                         ->with('success', 'زانیاری فەرمانبەر بە سەرکەوتوویی نوێکرایەوە.');
+    }
+
+    /**
+     * سڕینەوەی فەرمانبەرەکە لە داتابەیس
+     */
+    public function destroy(User $user)
+    {
+        // ڕێگری لەوەی بەکارهێنەر خۆی بسڕێتەوە
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'ناتوانیت هەژماری خۆت بسڕیتەوە.');
+        }
+
+        $user->delete();
+
+        return redirect()->route('admin.users.index')
+                         ->with('success', 'فەرمانبەر بە سەرکەوتوویی سڕایەوە.');
+    }

@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Staff Portal"
+version = "1.0.0"
+id = "artifacts/staff-portal"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24027
+
+[services.development]
+run = "pnpm --filter @workspace/staff-portal run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/staff-portal", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/staff-portal/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24027"
+BASE_PATH = "/"

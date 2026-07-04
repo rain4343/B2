@@ -1,0 +1,38 @@
+@extends('layouts.admin')
+@section('title', 'دروستکردنی نوسراوی نوێ')
+@section('content')
+    <h2 class="h3 mb-4">دروستکردنی نوسراوی نوێ</h2>
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ route('admin.documents.store') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="document_number" class="form-label">ژمارەی نوسراو</label>
+                        <input type="text" class="form-control @error('document_number') is-invalid @enderror" id="document_number" name="document_number" value="{{ old('document_number', $suggestedNumber) }}">
+                        @error('document_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="document_date" class="form-label">ڕێکەوتی نوسراو</label>
+                        <input type="date" class="form-control @error('document_date') is-invalid @enderror" id="document_date" name="document_date" value="{{ old('document_date', now()->toDateString()) }}">
+                        @error('document_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="subject" class="form-label">بابەت</label>
+                    <input type="text" class="form-control @error('subject') is-invalid @enderror" id="subject" name="subject" value="{{ old('subject') }}">
+                    @error('subject') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="mb-3">
+                    <label for="attachment" class="form-label">هاوپێچ (تەنها PDF)</label>
+                    <input class="form-control @error('attachment') is-invalid @enderror" type="file" id="attachment" name="attachment" accept="application/pdf">
+                    @error('attachment') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">پاشەکەوتکردن</button>
+                    <a href="{{ route('admin.documents.index') }}" class="btn btn-secondary">پاشگەزبوونەوە</a>
+                </div>
+            </form>
+        </div>
+    </div>
+@endsection

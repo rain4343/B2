@@ -1,0 +1,66 @@
+@extends('layouts.admin')
+
+@section('title', 'دەستکاریکردنی فەرمانبەر')
+
+@section('content')
+    <h2 class="h3 mb-4">دەستکاریکردنی فەرمانبەر: {{ $user->full_name }}</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="full_name" class="form-label">ناوی سیانی</label>
+                        <input type="text" class="form-control @error('full_name') is-invalid @enderror" id="full_name" name="full_name" value="{{ old('full_name', $user->full_name) }}">
+                        @error('full_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="username" class="form-label">ناوی بەکارهێنەر</label>
+                        <input type="text" class="form-control @error('username') is-invalid @enderror" id="username" name="username" value="{{ old('username', $user->username) }}">
+                        @error('username') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">ئیمەیڵ</label>
+                    <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email', $user->email) }}">
+                    @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                
+                <div class="mb-3">
+                    <label for="department_id" class="form-label">هۆبە (ئارەزوومەندانە)</label>
+                    <select class="form-select @error('department_id') is-invalid @enderror" id="department_id" name="department_id">
+                        <option value="">بێ هۆبە</option>
+                        @foreach($departments as $department)
+                            <option value="{{ $department->id }}" {{ old('department_id', $user->department_id) == $department->id ? 'selected' : '' }}>{{ $department->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('department_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+
+                <hr>
+                <p class="text-muted">تەنها ئەگەر دەتەوێت وشەی نهێنی بگۆڕیت، ئەم بەشە پڕ بکەرەوە.</p>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="password" class="form-label">وشەی نهێنی نوێ</label>
+                        <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password">
+                        @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="password_confirmation" class="form-label">دووبارەکردنەوەی وشەی نهێنی نوێ</label>
+                        <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">نوێکردنەوە</button>
+                    <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">پاشگەزبوونەوە</a>
+                </div>
+            </form>
+        </div>
+    </div>
+@endsection

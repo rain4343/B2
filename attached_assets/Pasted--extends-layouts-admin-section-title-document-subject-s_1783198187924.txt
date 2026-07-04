@@ -1,0 +1,80 @@
+@extends('layouts.admin')
+
+@section('title', 'وردەکاریی نوسراو: ' . $document->subject)
+
+@section('content')
+<div class="row">
+    <!-- ستوونی ڕاست: زانیاری و کردارەکان -->
+    <div class="col-lg-8">
+        <!-- کارتی زانیارییەکانی نوسراو -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="mb-0">زانیارییەکانی نوسراو</h3>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">ژمارەی نوسراو:</dt>
+                    <dd class="col-sm-9">{{ $document->document_number }}</dd>
+
+                    <dt class="col-sm-3">ڕێکەوت:</dt>
+                    <dd class="col-sm-9">{{ $document->document_date->format('d / m / Y') }}</dd>
+
+                    <dt class="col-sm-3">بابەت:</dt>
+                    <dd class="col-sm-9">{{ $document->subject }}</dd>
+
+                    <dt class="col-sm-3">دروستکەر:</dt>
+                    <dd class="col-sm-9">{{ $document->creator->full_name }}</dd>
+
+                    <dt class="col-sm-3">دواین حاڵەت:</dt>
+                    <dd class="col-sm-9"><span class="badge bg-primary fs-6">{{ $document->current_status }}</span></dd>
+                </dl>
+                <hr>
+                <a href="{{ asset('storage/' . $document->file_path) }}" target="_blank" class="btn btn-lg btn-success w-100">
+                    بینین و داگرتنی هاوپێچ (PDF)
+                </a>
+            </div>
+        </div>
+
+        <!-- کارتی کرداری نوێ (ئەمە لە قۆناغی داهاتوو کارا دەکرێت) -->
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">کرداری نوێ</h4>
+            </div>
+            <div class="card-body text-muted">
+                لێرەدا فۆڕمی نووسینی هامش و ئاڕاستەکردن دادەنرێت...
+            </div>
+        </div>
+    </div>
+
+    <!-- ستوونی چەپ: مێژووی جووڵەکان -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">مێژووی جووڵەی نوسراو</h4>
+            </div>
+            <div class="card-body">
+                @if($document->logs->isEmpty())
+                    <p class="text-center">هیچ جووڵەیەک تۆمار نەکراوە.</p>
+                @else
+                    <ul class="list-group list-group-flush">
+                        @foreach($document->logs as $log)
+                            <li class="list-group-item">
+                                <p class="fw-bold mb-1">{{ $log->action }}</p>
+                                <small class="text-muted">
+                                    <span class="d-block">لەلایەن: {{ $log->user->full_name ?? 'سیستەم' }}</span>
+                                    <span>کات: {{ $log->timestamp->format('Y/m/d - h:i A') }}</span>
+                                </small>
+                                @if($log->notes)
+                                    <div class="mt-2 p-2 bg-light border rounded">
+                                        <p class="mb-0 fst-italic"><strong>هامش:</strong> {{ $log->notes }}</p>
+                                    </div>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+@endsection

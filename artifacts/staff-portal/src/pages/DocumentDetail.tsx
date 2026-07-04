@@ -20,13 +20,13 @@ import { format } from "date-fns";
 
 const ku: React.CSSProperties = { fontFamily: "'Noto Kufi Arabic', sans-serif" };
 
-const statusColor: Record<string, string> = {
-  "نوێ": "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  "لە پێداچوونەوەدایە": "bg-amber-500/10 text-amber-500 border-amber-500/20",
-  "پەسەندکراوە": "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-  "ڕەتکراوەتەوە": "bg-destructive/10 text-destructive border-destructive/20",
-  "کۆتاییهاتووە": "bg-muted text-muted-foreground border-border",
-};
+function statusColor(status: string): string {
+  if (status === "نوێ") return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+  if (status.startsWith("ئاڕاستەکرا بۆ")) return "bg-amber-500/10 text-amber-500 border-amber-500/20";
+  if (status === "پەسەندکراوە") return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
+  if (status === "ڕەتکراوەتەوە") return "bg-destructive/10 text-destructive border-destructive/20";
+  return "bg-muted text-muted-foreground border-border";
+}
 
 export default function DocumentDetail() {
   const [, params] = useRoute("/documents/:id");
@@ -77,14 +77,15 @@ export default function DocumentDetail() {
   const routeToDepartment = () => {
     if (!selectedDept) return;
     const deptName = departments?.find((d) => String(d.id) === selectedDept)?.name ?? selectedDept;
-    const action = `ئاڕاستەکرا بۆ ${deptName}`;
+    const newStatus = `ئاڕاستەکرا بۆ: ${deptName}`;
+    const action = `نوسراوەکە ئاڕاستەکرا بۆ: ${deptName}`;
     updateDocMutation.mutate(
-      { id: documentId, data: { current_status: "لە پێداچوونەوەدایە" } },
+      { id: documentId, data: { current_status: newStatus } },
       {
         onSuccess: () => {
           createLogMutation.mutate(
             { id: documentId, data: { action, notes: note || undefined } },
-            { onSuccess: () => toast({ title: "نوسراوەکە ئاڕاستەکرا.", description: `${deptName} — لە پێداچوونەوەدایە` }) }
+            { onSuccess: () => toast({ title: "نوسراوەکە بە سەرکەوتوویی ئاڕاستەکرا.", description: deptName }) }
           );
         },
         onError: (err: any) =>
@@ -165,7 +166,7 @@ export default function DocumentDetail() {
                 <dd>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium border ${
-                      statusColor[document.current_status] ?? "bg-muted text-muted-foreground border-border"
+                      statusColor(document.current_status)
                     }`}
                   >
                     {document.current_status}

@@ -1,10 +1,16 @@
 import React, { useState } from "react";
 import { Link, useRoute } from "wouter";
-import { ArrowRight, FileText, Pencil, History, Plus } from "lucide-react";
-import { useGetDocument, getGetDocumentQueryKey, useListDocumentLogs, getListDocumentLogsQueryKey, useCreateDocumentLog } from "@workspace/api-client-react";
+import { ArrowRight, FileText, History, Plus, Download, ClipboardList } from "lucide-react";
+import {
+  useGetDocument,
+  getGetDocumentQueryKey,
+  useListDocumentLogs,
+  getListDocumentLogsQueryKey,
+  useCreateDocumentLog,
+} from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -25,11 +31,11 @@ export default function DocumentDetail() {
   const { toast } = useToast();
 
   const { data: document, isLoading: loadingDoc } = useGetDocument(documentId, {
-    query: { enabled: !!documentId, queryKey: getGetDocumentQueryKey(documentId) }
+    query: { enabled: !!documentId, queryKey: getGetDocumentQueryKey(documentId) },
   });
 
   const { data: logs, isLoading: loadingLogs, refetch: refetchLogs } = useListDocumentLogs(documentId, {
-    query: { enabled: !!documentId, queryKey: getListDocumentLogsQueryKey(documentId) }
+    query: { enabled: !!documentId, queryKey: getListDocumentLogsQueryKey(documentId) },
   });
 
   const createLogMutation = useCreateDocumentLog({
@@ -39,8 +45,9 @@ export default function DocumentDetail() {
         setNote("");
         refetchLogs();
       },
-      onError: (err: any) => toast({ title: "هەڵە", description: err.message, variant: "destructive" })
-    }
+      onError: (err: any) =>
+        toast({ title: "هەڵە", description: err.message, variant: "destructive" }),
+    },
   });
 
   const addNote = () => {
@@ -49,117 +56,172 @@ export default function DocumentDetail() {
   };
 
   if (loadingDoc) {
-    return <div className="p-8 text-center text-muted-foreground" style={ku}>چاوەڕێ بکە...</div>;
+    return (
+      <div className="p-8 text-center text-muted-foreground" style={ku}>
+        چاوەڕێ بکە...
+      </div>
+    );
   }
 
   if (!document) {
     return (
       <div className="text-center p-8" style={ku}>
         <h2 className="text-xl font-bold">نوسراوەکە نەدۆزرایەوە</h2>
-        <Button asChild className="mt-4"><Link href="/documents">گەڕانەوە بۆ نوسراوەکان</Link></Button>
+        <Button asChild className="mt-4">
+          <Link href="/documents">گەڕانەوە بۆ نوسراوەکان</Link>
+        </Button>
       </div>
     );
   }
 
+  const fileUrl = document.file_path
+    ? `/api/documents/uploads/${document.file_path}`
+    : null;
+
   return (
     <div className="space-y-6" data-testid="page-document-detail" style={ku}>
+      {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" asChild>
-            <Link href="/documents"><ArrowRight className="h-4 w-4" /></Link>
+            <Link href="/documents">
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{document.document_number}</h1>
-            <p className="text-muted-foreground mt-1">{document.subject}</p>
+            <h1 className="text-2xl font-bold tracking-tight">{document.subject}</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">{document.document_number}</p>
           </div>
         </div>
-        <Button variant="outline" asChild>
-          <Link href={`/documents/${documentId}/edit`} className="flex items-center gap-2">
-            <Pencil className="h-4 w-4" /> دەستکاری
-          </Link>
-        </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="md:col-span-1 shadow-sm h-fit">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <FileText className="h-5 w-5 text-muted-foreground" />
-              زانیاری
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div>
-              <p className="text-muted-foreground text-xs mb-1">دۆخ</p>
-              <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${statusColor[document.current_status] || "bg-muted text-muted-foreground border-border"}`}>
-                {document.current_status}
-              </span>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs mb-1">بەرواری نوسراو</p>
-              <p className="font-medium">{format(new Date(document.document_date), "yyyy-MM-dd")}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs mb-1">دروستکەر</p>
-              <p className="font-medium">{document.creator_name || "—"}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs mb-1">ڕێچکەی فایل</p>
-              <p className="font-medium break-all">{document.file_path}</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Two-column layout: left 2/3, right 1/3 */}
+      <div className="grid gap-6 lg:grid-cols-3">
 
-        <Card className="md:col-span-2 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <History className="h-5 w-5 text-muted-foreground" />
-              مێژووی چالاکی
-            </CardTitle>
-            <CardDescription>هەموو گۆڕانکارییەکان و تێبینییەکانی ئەم نوسراوەیە.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Textarea
-                placeholder="تێبینییەک بنووسە..."
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                className="text-right"
-                style={ku}
-                rows={2}
-              />
-              <Button onClick={addNote} disabled={createLogMutation.isPending || !note.trim()} className="shrink-0 self-end">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
+        {/* ── Left column (2/3): info + new action ── */}
+        <div className="lg:col-span-2 space-y-6">
 
-            <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+          {/* Document info card */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                زانیارییەکانی نوسراو
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
+                <dt className="text-muted-foreground font-medium">ژمارەی نوسراو:</dt>
+                <dd className="font-semibold">{document.document_number}</dd>
+
+                <dt className="text-muted-foreground font-medium">ڕێکەوت:</dt>
+                <dd>{format(new Date(document.document_date), "dd / MM / yyyy")}</dd>
+
+                <dt className="text-muted-foreground font-medium">بابەت:</dt>
+                <dd>{document.subject}</dd>
+
+                <dt className="text-muted-foreground font-medium">دروستکەر:</dt>
+                <dd>{document.creator_name || "—"}</dd>
+
+                <dt className="text-muted-foreground font-medium">دواین حاڵەت:</dt>
+                <dd>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium border ${
+                      statusColor[document.current_status] ?? "bg-muted text-muted-foreground border-border"
+                    }`}
+                  >
+                    {document.current_status}
+                  </span>
+                </dd>
+              </dl>
+
+              {fileUrl && (
+                <>
+                  <hr className="my-4" />
+                  <a
+                    href={fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-4 text-sm transition-colors"
+                  >
+                    <Download className="h-4 w-4" />
+                    بینین و داگرتنی هاوپێچ (PDF)
+                  </a>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* New action card */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <ClipboardList className="h-5 w-5 text-muted-foreground" />
+                کرداری نوێ
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="تێبینییەک بنووسە..."
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  className="text-right"
+                  style={ku}
+                  rows={3}
+                />
+                <Button
+                  onClick={addNote}
+                  disabled={createLogMutation.isPending || !note.trim()}
+                  className="shrink-0 self-end"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ── Right column (1/3): movement history ── */}
+        <div className="lg:col-span-1">
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <History className="h-5 w-5 text-muted-foreground" />
+                مێژووی جووڵەی نوسراو
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               {loadingLogs ? (
-                <p className="text-center text-muted-foreground py-6">چاوەڕێ بکە...</p>
+                <p className="text-center text-muted-foreground py-6 text-sm">چاوەڕێ بکە...</p>
               ) : !logs?.length ? (
-                <p className="text-center text-muted-foreground py-6">هیچ چالاکییەک تۆمار نەکراوە.</p>
+                <p className="text-center text-muted-foreground py-6 text-sm">
+                  هیچ جووڵەیەک تۆمار نەکراوە.
+                </p>
               ) : (
-                logs.map((log) => (
-                  <div key={log.id} className="flex gap-3 border-b pb-3 last:border-b-0">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">{log.action}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(log.timestamp), "yyyy-MM-dd HH:mm")}
+                <ul className="space-y-0 divide-y">
+                  {logs.map((log) => (
+                    <li key={log.id} className="py-3 first:pt-0 last:pb-0">
+                      <p className="font-semibold text-sm">{log.action}</p>
+                      <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                        {log.user_name && <span className="block">لەلایەن: {log.user_name}</span>}
+                        <span className="block">
+                          کات: {format(new Date(log.timestamp), "yyyy/MM/dd - hh:mm a")}
                         </span>
                       </div>
-                      {log.notes && <p className="text-sm text-muted-foreground mt-1">{log.notes}</p>}
-                      {log.user_name && (
-                        <p className="text-xs text-muted-foreground mt-1">لەلایەن: {log.user_name}</p>
+                      {log.notes && (
+                        <div className="mt-2 p-2 bg-muted/50 border rounded text-xs">
+                          <strong>هامش:</strong>{" "}
+                          <span className="italic">{log.notes}</span>
+                        </div>
                       )}
-                    </div>
-                  </div>
-                ))
+                    </li>
+                  ))}
+                </ul>
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

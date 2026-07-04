@@ -139,11 +139,16 @@ router.post("/documents", upload.single("attachment"), async (req, res) => {
 
   const filePath = `attachments/${req.file.filename}`;
 
+  const parsedDate = new Date(document_date.trim());
+  if (isNaN(parsedDate.getTime())) {
+    return res.status(400).json({ error: "Invalid document_date format" });
+  }
+
   const [doc] = await db
     .insert(documentsTable)
     .values({
       document_number: document_number.trim(),
-      document_date: new Date(document_date.trim()).toISOString().slice(0, 10),
+      document_date: parsedDate.toISOString().slice(0, 10),
       subject: subject.trim(),
       file_path: filePath,
       creator_id: creatorId,
@@ -297,6 +302,20 @@ router.post("/documents/:id/logs", async (req, res) => {
     .returning();
 
   return res.status(201).json(log);
+});
+
+// GET /documents/uploads/attachments/:filename — authenticated file download
+// file_path in DB is stored as "attachments/<filename>", so this route mirrors that shape.
+router.get("/documents/uploads/attachments/:filename", (req, res) => {
+  if (!req.session?.userId) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  const filename = path.basename(req.params.filename); // prevent path traversal
+  const filePath = path.join(process.cwd(), "uploads", "attachments", filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "File not found" });
+  }
+  return res.sendFile(filePath);
 });
 
 export default router;

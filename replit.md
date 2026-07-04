@@ -1,68 +1,57 @@
 # Staff Portal
 
-An internal HR/employee management system for Kurdish-speaking organizations. Manages staff (users), departments, and role-based access control (Super Admin / فەرمانبەر).
+A full-stack staff management application built as a pnpm TypeScript monorepo.
 
-## Run & Operate
+## Architecture
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080, served at `/api`)
-- `pnpm --filter @workspace/staff-portal run dev` — run the frontend (served at `/`)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+### Artifacts (runnable apps)
+- **`artifacts/staff-portal`** — React + Vite frontend (Staff Portal web app)
+- **`artifacts/api-server`** — Node.js/Express backend API
+- **`artifacts/mockup-sandbox`** — Component design sandbox (dev only)
 
-## Stack
+### Shared libraries (`lib/`)
+- **`lib/db`** — Drizzle ORM schema + PostgreSQL client
+- **`lib/api-spec`** — OpenAPI specification (source of truth for the API contract)
+- **`lib/api-zod`** — Zod schemas generated from the OpenAPI spec
+- **`lib/api-client-react`** — React Query hooks generated from the OpenAPI spec
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- Frontend: React + Vite, TanStack Query, Wouter, React Hook Form, Recharts, Tailwind CSS v4
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec at `lib/api-spec/openapi.yaml`)
-- Build: esbuild (CJS bundle)
+## Tech Stack
+- **Frontend:** React 19, Vite 7, Tailwind CSS v4, Wouter, TanStack Query, Radix UI
+- **Backend:** Node.js, Express 5, TypeScript
+- **Database:** PostgreSQL via Drizzle ORM
+- **API codegen:** OpenAPI + Orval
 
-## Where things live
+## Running Locally
 
-- `lib/api-spec/openapi.yaml` — OpenAPI spec (source of truth for all API contracts)
-- `lib/db/src/schema/` — Drizzle table definitions (departments, users, roles, role_user)
-- `artifacts/api-server/src/routes/` — Express route handlers
-- `artifacts/staff-portal/src/` — React frontend (pages, components, hooks)
-- `lib/api-client-react/src/generated/` — Generated React Query hooks (do not edit)
-- `lib/api-zod/src/generated/` — Generated Zod schemas for server validation (do not edit)
+Both services start automatically via Replit workflows:
 
-## Database schema
+| Service      | Workflow     | Port  |
+|--------------|--------------|-------|
+| Staff Portal | Staff Portal | 24027 |
+| API Server   | API Server   | 8080  |
 
-- `departments` — Organization divisions (name unique)
-- `users` — Staff members with department FK, hashed password, email/username unique
-- `roles` — RBAC roles (seeded: Super Admin, فەرمانبەر)
-- `role_user` — Many-to-many join table between users and roles
+## Database
 
-## Architecture decisions
+Replit's built-in PostgreSQL is used. The `DATABASE_URL` environment variable is managed automatically.
 
-- OpenAPI-first: all API contracts live in `lib/api-spec/openapi.yaml`; types/hooks/schemas are generated, never hand-written
-- Passwords stored as-is from the frontend (no bcrypt) — add hashing before production
-- No authentication middleware currently — add auth layer before exposing to the internet
-- `sql.raw()` eliminated in favor of Drizzle `inArray()` to prevent SQL injection risk
-- Multi-step user/role mutations are wrapped in DB transactions for atomicity
+To push schema changes to the database:
+```bash
+pnpm --filter @workspace/db run push
+```
 
-## Product
+## API Codegen
 
-- **Dashboard** (`/`) — summary cards (staff, departments, roles, super admins), bar chart by department, pie chart by role, recent staff table
-- **Staff** (`/staff`) — searchable/filterable employee list with department and roles; add/edit/delete
-- **Departments** (`/departments`) — manage divisions; view per-department staff roster
-- **Roles** (`/roles`) — manage RBAC roles; assign/remove from staff members
+After changing `lib/api-spec/openapi.yaml`, regenerate client code:
+```bash
+pnpm run --filter @workspace/api-spec codegen
+```
 
-## User preferences
+## Environment Variables
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+| Variable        | Description                    | Source          |
+|-----------------|--------------------------------|-----------------|
+| `DATABASE_URL`  | PostgreSQL connection string   | Replit managed  |
+| `SESSION_SECRET`| Express session secret         | Replit secret   |
+| `PORT`          | Server port                    | Replit managed  |
 
-## Gotchas
-
-- After changing `lib/api-spec/openapi.yaml`, always run `pnpm --filter @workspace/api-spec run codegen` before editing routes or frontend
-- After changing `lib/db/src/schema/`, run `pnpm run typecheck:libs` so leaf packages see updated declarations
-- Verify artifacts with `pnpm --filter @workspace/<slug> run typecheck`, not `build`
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+## User Preferences

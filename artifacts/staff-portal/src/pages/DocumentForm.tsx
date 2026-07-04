@@ -383,7 +383,7 @@ export default function DocumentForm() {
                   <Paperclip className="h-4 w-4 shrink-0" />
                   <span style={ku}>فایلی هاوپێچکراو: </span>
                   <a
-                    href={`/api/uploads/${document.file_path}`}
+                    href={`/api/documents/uploads/${document.file_path}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:underline truncate"

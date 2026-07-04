@@ -1,10 +1,11 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import session from "express-session";
 import pinoHttp from "pino-http";
 import path from "path";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import multer from "multer";
 
 const app: Express = express();
 
@@ -55,9 +56,21 @@ app.use(
   }),
 );
 
-// Serve uploaded files — accessible at /api/uploads/attachments/<filename>
-app.use("/api/uploads", express.static(path.join(process.cwd(), "uploads")));
-
 app.use("/api", router);
+
+// Centralised error handler — maps multer and other errors to JSON responses
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  if (err instanceof multer.MulterError) {
+    const status = err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+    return res.status(status).json({ error: err.message });
+  }
+  if (err instanceof Error) {
+    logger.error({ err }, "Unhandled error");
+    return res.status(400).json({ error: err.message });
+  }
+  logger.error({ err }, "Unknown error");
+  return res.status(500).json({ error: "Internal server error" });
+});
 
 export default app;
